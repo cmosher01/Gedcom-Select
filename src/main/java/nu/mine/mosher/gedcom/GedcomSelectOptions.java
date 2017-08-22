@@ -1,27 +1,47 @@
 package nu.mine.mosher.gedcom;
 
-import joptsimple.OptionParser;
-import joptsimple.OptionSpec;
-
 import java.io.File;
-
-import static java.util.Arrays.asList;
+import java.io.IOException;
 
 public class GedcomSelectOptions extends GedcomOptions {
-    private final OptionSpec<Expr> expr;
-    private final OptionSpec<File> file;
+    public File file;
+    public Expr expr;
 
-    public GedcomSelectOptions(final OptionParser parser) {
-        super(parser);
-        this.expr = parser.acceptsAll(asList("e","expr"),"tag path to match, ex.: .INDI.NAME").withRequiredArg().required().ofType(Expr.class).describedAs("EXPR");
-        this.file = parser.nonOptions("file of values").ofType(File.class).describedAs("VALUES");
+    @Override
+    public void help() {
+        this.help = true;
+        System.err.println("Usage: java -jar gedcom-select-all.jar [OPTION]... VALUES <in.ged");
+        System.err.println("Extracts IDs from a GEDCOM file, based on tag=value list.");
+        System.err.println("Options:");
+        System.err.println("-w, --where          Tag path to match, ex.: .INDI.NAME");
+        super.options();
     }
 
-    public Expr expr() {
-        return this.expr.value(get());
+    public void w(final String expr) throws Expr.InvalidSyntax {
+        where(expr);
     }
 
-    public File file() {
-        return this.file.value(get());
+    public void where(final String expr) throws Expr.InvalidSyntax {
+        this.expr = new Expr(expr);
+    }
+
+    public void __(final String file) throws IOException {
+        this.file = new File(file);
+        if (!this.file.canRead()) {
+            throw new IllegalArgumentException("Cannot open file of values: " + this.file.getCanonicalPath());
+        }
+    }
+
+    public GedcomSelectOptions verify() {
+        if (this.help) {
+            return this;
+        }
+        if (this.file == null) {
+            throw new IllegalArgumentException("Missing required input file of values.");
+        }
+        if (this.expr == null) {
+            throw new IllegalArgumentException("Missing required where clause.");
+        }
+        return this;
     }
 }

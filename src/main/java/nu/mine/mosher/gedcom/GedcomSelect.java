@@ -1,8 +1,8 @@
 package nu.mine.mosher.gedcom;
 
-import joptsimple.OptionParser;
 import nu.mine.mosher.collection.TreeNode;
 import nu.mine.mosher.gedcom.exception.InvalidLevel;
+import nu.mine.mosher.mopper.ArgParser;
 
 import java.io.*;
 import java.util.HashSet;
@@ -25,9 +25,10 @@ public class GedcomSelect implements Gedcom.Processor {
     private String lastID = "";
 
     public static void main(final String... args) throws InvalidLevel, IOException, Expr.InvalidSyntax {
-        final GedcomSelectOptions options = new GedcomSelectOptions(new OptionParser());
-        options.parse(args);
+        final GedcomSelectOptions options = new ArgParser<>(new GedcomSelectOptions()).parse(args).verify();
         new Gedcom(options, new GedcomSelect(options)).main();
+        System.out.flush();
+        System.err.flush();
     }
 
     private GedcomSelect(final GedcomSelectOptions options) {
@@ -49,10 +50,7 @@ public class GedcomSelect implements Gedcom.Processor {
     }
 
     private void readValues() throws IOException {
-        File file = this.options.file();
-        if (file == null) {
-            throw new IllegalArgumentException("Missing required VALUES file.");
-        }
+        final File file = this.options.file;
         final BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
         for (String s = in.readLine(); s != null; s = in.readLine()) {
             this.values.add(s);
@@ -84,14 +82,14 @@ public class GedcomSelect implements Gedcom.Processor {
         for (final TreeNode<GedcomLine> c : node) {
             final GedcomLine ln = c.getObject();
             final String tag = ln.getTagString().toLowerCase();
-            if (tag.equals(this.options.expr().get(level))) {
+            if (tag.equals(this.options.expr.get(level))) {
                 if (level == 0 && !ln.hasID()) {
                     throw new IOException("missing ID: " + ln);
                 }
                 if (ln.hasID()) {
                     this.lastID = ln.getID();
                 }
-                if (this.options.expr().at(level)) {
+                if (this.options.expr.at(level)) {
                     log().finer("checking " + this.lastID + ": " + ln);
                     if (this.values.contains(ln.getValue())) {
                         log().info("found " + this.lastID + ": " + ln);
