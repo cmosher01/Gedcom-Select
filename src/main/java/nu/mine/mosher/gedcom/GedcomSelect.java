@@ -5,6 +5,7 @@ import nu.mine.mosher.gedcom.exception.InvalidLevel;
 import nu.mine.mosher.mopper.ArgParser;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -18,15 +19,16 @@ import static nu.mine.mosher.logging.Jul.log;
  * <p>
  * Created by Christopher Alan Mosher on 2017-08-09
  */
-public class GedcomSelect implements Gedcom.Processor {
+public class GedcomSelect {
     private final GedcomSelectOptions options;
     private final Set<String> values = new HashSet<>();
+    private GedcomTree tree;
 
     private String lastID = "";
 
     public static void main(final String... args) throws InvalidLevel, IOException, Expr.InvalidSyntax {
-        final GedcomSelectOptions options = new ArgParser<>(new GedcomSelectOptions()).parse(args).verify();
-        new Gedcom(options, new GedcomSelect(options)).main();
+        log();
+        new GedcomSelect(new ArgParser<>(new GedcomSelectOptions()).parse(args).verify()).main();
         System.out.flush();
         System.err.flush();
     }
@@ -35,30 +37,28 @@ public class GedcomSelect implements Gedcom.Processor {
         this.options = options;
     }
 
-    @Override
-    public boolean process(final GedcomTree tree) {
-        try {
-            readValues();
-            selectSubm(tree);
-            select(tree);
-        } catch (final Throwable e) {
-            // TODO fix exception handling
-            throw new IllegalStateException(e);
+    private void main() throws IOException, InvalidLevel {
+        if (this.options.help) {
+            return;
         }
+        readGedcom();
+        readValues();
+        selectSubm();
+        select(tree.getRoot(), 0);
+    }
 
-        return false;
+    private void readGedcom() throws IOException, InvalidLevel {
+        tree = Gedcom.readFile(new BufferedInputStream(new FileInputStream(options.gedcom)));
+        new GedcomConcatenator(tree).concatenate();
     }
 
     private void readValues() throws IOException {
-        final File file = this.options.file;
-        final BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-        for (String s = in.readLine(); s != null; s = in.readLine()) {
-            this.values.add(s);
-        }
-        in.close();
+        new BufferedReader(new InputStreamReader(new FileInputStream(FileDescriptor.in), StandardCharsets.UTF_8))
+            .lines()
+            .forEach(this.values::add);
     }
 
-    private void selectSubm(final GedcomTree tree) {
+    private void selectSubm() {
         for (final TreeNode<GedcomLine> r : tree.getRoot()) {
             final GedcomLine head = r.getObject();
             if (head.getTag().equals(GedcomTag.HEAD)) {
@@ -74,11 +74,7 @@ public class GedcomSelect implements Gedcom.Processor {
         }
     }
 
-    private void select(final GedcomTree tree) throws IOException {
-        processLevel(tree.getRoot(), 0);
-    }
-
-    private void processLevel(final TreeNode<GedcomLine> node, final int level) throws IOException {
+    private void select(final TreeNode<GedcomLine> node, final int level) throws IOException {
         for (final TreeNode<GedcomLine> c : node) {
             final GedcomLine ln = c.getObject();
             final String tag = ln.getTagString().toLowerCase();
@@ -97,7 +93,7 @@ public class GedcomSelect implements Gedcom.Processor {
                     }
                 } else {
                     log().finest("checking within " + ln);
-                    processLevel(c, level + 1);
+                    select(c, level + 1);
                 }
             }
         }
