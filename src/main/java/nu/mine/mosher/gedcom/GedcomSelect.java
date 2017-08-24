@@ -48,7 +48,7 @@ public class GedcomSelect {
     }
 
     private void readGedcom() throws IOException, InvalidLevel {
-        tree = Gedcom.readFile(new BufferedInputStream(new FileInputStream(options.gedcom)));
+        tree = Gedcom.readFile(new BufferedInputStream(new FileInputStream(this.options.gedcom)));
         new GedcomConcatenator(tree).concatenate();
     }
 

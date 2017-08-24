@@ -3,14 +3,15 @@ package nu.mine.mosher.gedcom;
 import java.io.File;
 import java.io.IOException;
 
-public class GedcomSelectOptions extends GedcomOptions {
+@SuppressWarnings({"access", "WeakerAccess", "unused"})
+public class GedcomSelectOptions {
+    public boolean help;
     public File gedcom;
     public Expr expr;
 
-    @Override
     public void help() {
         this.help = true;
-        System.err.println("Usage: java -jar gedcom-select-all.jar [OPTION]... <values.txt");
+        System.err.println("Usage: java -jar gedcom-select-all.jar -g in.ged -w .INDI.NAME <names.txt");
         System.err.println("Extracts IDs from a GEDCOM file, based on tag=value list.");
         System.err.println("Options:");
         System.err.println("-g, --gedcom=FILE    GEDCOM file to extract from.");
