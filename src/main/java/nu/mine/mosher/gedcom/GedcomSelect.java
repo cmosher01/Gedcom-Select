@@ -26,7 +26,7 @@ public class GedcomSelect {
 
     private String lastID = "";
 
-    public static void main(final String... args) throws InvalidLevel, IOException, Expr.InvalidSyntax {
+    public static void main(final String... args) throws InvalidLevel, IOException, GedcomDataRef.InvalidSyntax {
         log();
         new GedcomSelect(new ArgParser<>(new GedcomSelectOptions()).parse(args).verify()).main();
         System.out.flush();
@@ -78,14 +78,14 @@ public class GedcomSelect {
         for (final TreeNode<GedcomLine> c : node) {
             final GedcomLine ln = c.getObject();
             final String tag = ln.getTagString().toLowerCase();
-            if (tag.equals(this.options.expr.get(level))) {
+            if (tag.equals(this.options.ref.get(level))) {
                 if (level == 0 && !ln.hasID()) {
                     throw new IOException("missing ID: " + ln);
                 }
                 if (ln.hasID()) {
                     this.lastID = ln.getID();
                 }
-                if (this.options.expr.at(level)) {
+                if (this.options.ref.at(level)) {
                     log().finer("checking " + this.lastID + ": " + ln);
                     if (this.values.contains(ln.getValue())) {
                         log().info("found " + this.lastID + ": " + ln);

@@ -7,7 +7,7 @@ import java.io.IOException;
 public class GedcomSelectOptions {
     public boolean help;
     public File gedcom;
-    public Expr expr;
+    public GedcomDataRef ref;
 
     public void help() {
         this.help = true;
@@ -29,12 +29,12 @@ public class GedcomSelectOptions {
         }
     }
 
-    public void w(final String expr) throws Expr.InvalidSyntax {
+    public void w(final String expr) throws GedcomDataRef.InvalidSyntax {
         where(expr);
     }
 
-    public void where(final String expr) throws Expr.InvalidSyntax {
-        this.expr = new Expr(expr);
+    public void where(final String expr) throws GedcomDataRef.InvalidSyntax {
+        this.ref = new GedcomDataRef(expr);
     }
 
     public GedcomSelectOptions verify() {
@@ -44,7 +44,7 @@ public class GedcomSelectOptions {
         if (this.gedcom == null) {
             throw new IllegalArgumentException("Missing required -g GEDCOM file.");
         }
-        if (this.expr == null) {
+        if (this.ref == null) {
             throw new IllegalArgumentException("Missing required -w tags.");
         }
         return this;
