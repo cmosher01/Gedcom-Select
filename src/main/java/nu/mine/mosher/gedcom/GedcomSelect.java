@@ -44,7 +44,7 @@ public class GedcomSelect {
         readGedcom();
         readValues();
         selectSubm();
-        select(tree.getRoot(), 0);
+        select();
     }
 
     private void readGedcom() throws IOException, InvalidLevel {
@@ -53,9 +53,7 @@ public class GedcomSelect {
     }
 
     private void readValues() throws IOException {
-        new BufferedReader(new InputStreamReader(new FileInputStream(FileDescriptor.in), StandardCharsets.UTF_8))
-            .lines()
-            .forEach(this.values::add);
+        new BufferedReader(new InputStreamReader(new FileInputStream(FileDescriptor.in), StandardCharsets.UTF_8)).lines().forEach(this.values::add);
     }
 
     private void selectSubm() {
@@ -74,28 +72,18 @@ public class GedcomSelect {
         }
     }
 
-    private void select(final TreeNode<GedcomLine> node, final int level) throws IOException {
-        for (final TreeNode<GedcomLine> c : node) {
-            final GedcomLine ln = c.getObject();
-            final String tag = ln.getTagString().toLowerCase();
-            if (tag.equals(this.options.ref.get(level))) {
-                if (level == 0 && !ln.hasID()) {
-                    throw new IOException("missing ID: " + ln);
-                }
-                if (ln.hasID()) {
-                    this.lastID = ln.getID();
-                }
-                if (this.options.ref.at(level)) {
-                    log().finer("checking " + this.lastID + ": " + ln);
-                    if (this.values.contains(ln.getValue())) {
-                        log().info("found " + this.lastID + ": " + ln);
-                        System.out.println(this.lastID);
-                    }
-                } else {
-                    log().finest("checking within " + ln);
-                    select(c, level + 1);
-                }
+    private void select() throws IOException {
+        this.options.ref.forEach(this.tree, c -> {
+            if (this.values.contains(c.getObject().getValue())) {
+                System.out.println(findContainingRecord(c).getObject().getID());
             }
+        });
+    }
+
+    private static TreeNode<GedcomLine> findContainingRecord(final TreeNode<GedcomLine> n) {
+        if (n.parent().parent() == null) {
+            return n;
         }
+        return findContainingRecord(n.parent());
     }
 }

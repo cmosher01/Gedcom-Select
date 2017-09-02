@@ -9,6 +9,10 @@ public class GedcomSelectOptions {
     public File gedcom;
     public GedcomDataRef ref;
 
+    public void h() {
+        help();
+    }
+
     public void help() {
         this.help = true;
         System.err.println("Usage: java -jar gedcom-select-all.jar -g in.ged -w .INDI.NAME <names.txt");
